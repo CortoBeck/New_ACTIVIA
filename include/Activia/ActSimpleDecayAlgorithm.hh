@@ -17,10 +17,10 @@
 #include <string>
 #include <cmath>
 
-/**
- * Algorithme Bateman (chaîne 2 membres k->j) + side-branches short-lived (déversement immédiat).
- * Sortie: table ROOT/ASCII avec colonnes "Z", "A", "dNdt" (per kg per day).
- */
+
+// Algorithme Bateman (chaîne 2 membres k->j) + side-branches short-lived (déversement immédiat).
+// Sortie: table ROOT/ASCII avec colonnes "Z", "A", "dNdt" (per kg per day).
+
 class ActSimpleDecayAlgorithm : public ActAbsDecayAlgorithm {
 public:
   ActSimpleDecayAlgorithm(ActTarget* target,

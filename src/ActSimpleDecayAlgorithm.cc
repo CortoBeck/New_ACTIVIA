@@ -28,7 +28,7 @@ void ActSimpleDecayAlgorithm::writeOutputPreamble() {
 }
 
 std::map<ActNuclide*, double> ActSimpleDecayAlgorithm::buildProductionRates() {
-  std::map<ActNuclide*, double> R; // per kg per day
+  std::map<ActNuclide*, double> R;
 
   // Somme des taux de production sur tous les isotopes cibles
   std::vector<ActProdXSecData*> allXSec = _theTarget->getXSections();
@@ -36,7 +36,7 @@ std::map<ActNuclide*, double> ActSimpleDecayAlgorithm::buildProductionRates() {
     if (!px) continue;
     auto xmap = px->getXSecData();   // map<ActNuclide*, ActXSecGraph>
     for (auto &kv : xmap) {
-      double r = kv.second.getTotalProdRate();   // méthode non-const
+      double r = kv.second.getTotalProdRate();
       R[kv.first] += r;
     }
   }
@@ -56,7 +56,6 @@ void ActSimpleDecayAlgorithm::addShortLivedSideBranchesTo(std::map<ActNuclide*, 
     for (int s = 0; s < nsb; ++s) {
       ActNuclide* sb = p->getSideBranch(s);
       if (!sb) continue;
-      // side-branch court -> déversement immédiat
       Rj += R[sb];
     }
     R[j] = Rj;
@@ -66,32 +65,32 @@ void ActSimpleDecayAlgorithm::addShortLivedSideBranchesTo(std::map<ActNuclide*, 
 void ActSimpleDecayAlgorithm::calculateDecays(ActAbsOutput* output) {
   _outputData = output;
 
-  // 1) Charger les paires parent->fils depuis decayChains.dat
+  // Charger les paires parent->fils depuis decayChains.dat
   _chains.load("decayChains.dat", _theProdList);
   _decayEnergies.load("decayEnergy.dat", _theProdList);
 
-  // 2) Temps (jours)
+  // Temps
   const double texp = _times->getExposureTime();
   const double tdec = _times->getDecayTime();
 
-  // 3) Taux de production et pliage des side-branches
+  // Taux de production et pliage des side-branches
   std::map<ActNuclide*, double> R = buildProductionRates();
   addShortLivedSideBranchesTo(R);
 
-  // 4) Table de sortie — colonnes ROOT-compatibles
+  // Table de sortie 
   std::vector<ActString> cols;
   cols.emplace_back("Z");
   cols.emplace_back("A");
   cols.emplace_back("R_j");
-  cols.emplace_back("R_k");        // somme sur les parents k
-  cols.emplace_back("dNdt");       // = lambda_j * N_j(t_dec), per kg per day
+  cols.emplace_back("R_k"); 
+  cols.emplace_back("dNdt"); 
   cols.emplace_back("Nj_exp");
-  cols.emplace_back("Nk_exp");     // somme sur les parents k
+  cols.emplace_back("Nk_exp");
   cols.emplace_back("Q_EC_keV");
   cols.emplace_back("Q_beta_keV");
   ActOutputTable table("Bateman2_Yields", cols);
 
-  // 5) Calcul isotope par isotope
+  // Calcul isotope par isotope
   const int nProd = _theProdList->getNProdNuclides();
   for (int i = 0; i < nProd; ++i) {
     ActProdNuclide* p = _theProdList->getProdNuclide(i);
@@ -105,11 +104,11 @@ void ActSimpleDecayAlgorithm::calculateDecays(ActAbsOutput* output) {
     // Direct : N_j(t_exp)
     const double Nj_dir_exp = (lj > 0.0 ? (Rj / lj) * (1.0 - std::exp(-lj * texp)) : 0.0);
 
-    // Chaîné (expo + refroidissement)
+    // Chaîné 
     double Nj_chain_exp_sum = 0.0;
     double Nk_cool_sum      = 0.0;
-    double Rk_sum           = 0.0;  // *** nouveau : somme des R_k des parents
-    double Nk_texp_sum      = 0.0;  // *** nouveau : somme des N_k(t_exp) des parents
+    double Rk_sum           = 0.0;
+    double Nk_texp_sum      = 0.0;
 
     const auto& parents = _chains.parentsOf(j);
     for (const auto& link : parents) {
@@ -120,14 +119,14 @@ void ActSimpleDecayAlgorithm::calculateDecays(ActAbsOutput* output) {
 
       Rk_sum += Rk;
 
-      // Expo (contribution k -> j pendant texp)
+      // Expo 
       Nj_chain_exp_sum += Nj_from_k_exposure(Rk, lj, lk, b, texp);
 
       // N_k(t_exp)
       const double Nk_texp = (lk > 0.0 ? (Rk / lk) * (1.0 - std::exp(-lk * texp)) : 0.0);
       Nk_texp_sum += Nk_texp;
 
-      // Refroidissement (k -> j pendant tdec)
+      // Refroidissement 
       Nk_cool_sum += Nj_chain_cooling_add(Nk_texp, lj, lk, b, tdec);
     }
 
@@ -137,23 +136,23 @@ void ActSimpleDecayAlgorithm::calculateDecays(ActAbsOutput* output) {
     const double Nj_tdec = (Nj_dir_exp + Nj_chain_exp_sum) * std::exp(-lj * tdec) + Nk_cool_sum;
 
     // dNdt = lambda_j * N_j(t_dec)
-    const double dNdt = lj * Nj_tdec;  // per kg per day
+    const double dNdt = lj * Nj_tdec; 
 
     std::vector<double> row;
     row.push_back(static_cast<double>(j->getZ()));
     row.push_back(j->getA());
     row.push_back(Rj);
-    row.push_back(Rk_sum);      // *** corrigé : utiliser la somme des parents
+    row.push_back(Rk_sum); 
     row.push_back(dNdt);
     row.push_back(Nj_texp);
-    row.push_back(Nk_texp_sum); // *** corrigé : somme des N_k(t_exp)
+    row.push_back(Nk_texp_sum); 
     auto qv = _decayEnergies.getQValues(j);
     row.push_back(qv.QEC);
     row.push_back(qv.Qbeta);
     table.addRow(row);
   }
 
-  // 6) Impression
+  // Impression
   if (_outputData) {
     writeOutputPreamble();
     _outputData->outputTable(table);

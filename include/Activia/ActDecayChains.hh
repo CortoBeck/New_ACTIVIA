@@ -8,13 +8,7 @@
 #include <vector>
 #include <string>
 
-/**
- * \brief Lecture de decayChains.dat (chaînes à 2 membres k->j)
- *        et exposition d'un mapping enfant j -> { (parent k, branching), ... }.
- *
- * Format (ignorer les lignes vides et celles commençant par '#'):
- *   Z_k A_k  Z_j A_j  branching
- */
+
 class ActDecayChains {
 public:
   struct ParentLink {

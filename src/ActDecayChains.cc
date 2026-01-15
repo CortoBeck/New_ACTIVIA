@@ -36,7 +36,7 @@ void ActDecayChains::load(const std::string& filename, ActProdNuclideList* prodL
     if (line.empty()) continue;
     if (line[0] == '#') continue;
 
-    // Format: Z_k A_k  Z_j A_j  branching
+    // Format: Z_k A_k  Z_j A_j
     std::istringstream iss(line);
     int Zk, Zj;
     double Ak, Aj, b;
@@ -45,7 +45,7 @@ void ActDecayChains::load(const std::string& filename, ActProdNuclideList* prodL
     ActNuclide* k = findProductNuclide(prodList, Zk, Ak);
     ActNuclide* j = findProductNuclide(prodList, Zj, Aj);
     if (!k || !j) {
-      // Parent ou fils non listé comme "produit" dans decayData.dat → ignorer la ligne
+      // Parent ou fils non listé comme "produit" dans decayData.dat : ignorer la ligne
       continue;
     }
 
