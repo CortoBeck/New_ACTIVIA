@@ -3,3 +3,10 @@ bin
 lib
 tmp
 config.mk
+*.root
+*.pdf
+*.png
+tmp/
+bin/
+lib/
+\3030
